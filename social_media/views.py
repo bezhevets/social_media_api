@@ -1,13 +1,14 @@
-from django.shortcuts import render
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
 from social_media.models import Profile
 from social_media.serializers import ProfileSerializer, ProfileListSerializer
 
 
-# Create your views here.
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -15,4 +16,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return ProfileSerializer
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        owner = self.request.user
+        owner.first_name = self.request.data.get("owner.first_name")
+        owner.last_name = self.request.data.get("owner.last_name")
+        owner.save()
+
+        serializer.save(owner=owner)
