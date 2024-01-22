@@ -40,3 +40,28 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        methods=["GET"],
+        detail=True
+    )
+    def follow(self, request, pk=None):
+        profile_to_follow = self.get_object()
+
+        if self.request.user.profile == profile_to_follow:
+            return Response(
+                {"detail": "You cannot follow yourself."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if profile_to_follow in self.request.user.profile.following.all():
+            return Response(
+                {"detail": "You are already following this user."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        self.request.user.profile.following.add(profile_to_follow)
+        return Response(
+                {"detail": "You are now following this user."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
