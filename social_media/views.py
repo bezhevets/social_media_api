@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -99,6 +100,15 @@ class ProfileViewSet(viewsets.ModelViewSet):
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
+    permission_classes = (IsOwnerOrIfAuthenticatedReadOnly,)
+
+    def get_queryset(self):
+        if self.action == "list":
+            queryset = self.queryset.filter(
+                Q(owner__profile__followers=self.request.user.profile)
+                | Q(owner__profile=self.request.user.profile)
+            )
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
