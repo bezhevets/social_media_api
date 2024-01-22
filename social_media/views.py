@@ -63,5 +63,24 @@ class ProfileViewSet(viewsets.ModelViewSet):
         self.request.user.profile.following.add(profile_to_follow)
         return Response(
                 {"detail": "You are now following this user."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_200_OK
+            )
+
+    @action(
+        methods=["GET"],
+        detail=True
+    )
+    def unfolow(self, request, pk=None):
+        profile_to_unfollow = self.get_object()
+
+        if not self.request.user.profile.following.filter(id=profile_to_unfollow.id).exists():
+            return Response(
+                {"detail": "You are not unfollow this user."},
+                status=status.HTTP_200_OK
+            )
+
+        self.request.user.profile.following.remove(profile_to_unfollow)
+        return Response(
+                {"detail": "You have unfollowed this user"},
+                status=status.HTTP_200_OK
             )
