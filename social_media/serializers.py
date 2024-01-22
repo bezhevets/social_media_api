@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from social_media.models import Profile
+from social_media.models import Profile, Post
 from user.serializers import UserUpdateForProfileSerializer
 
 
@@ -58,3 +58,18 @@ class ProfileImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ("id", "image")
+
+
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ("id", "text", "created_at", "hashtag", "image")
+
+
+class PostListSerializer(PostSerializer):
+    owner = serializers.SlugRelatedField(many=False, read_only=True, slug_field="full_name")
+
+    class Meta:
+        model = Post
+        fields = ("id", "owner", "text", "hashtag", "image", "created_at")
+

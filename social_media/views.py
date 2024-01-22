@@ -2,12 +2,14 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from social_media.models import Profile
+from social_media.models import Profile, Post
 from social_media.permissions import IsOwnerOrIfAuthenticatedReadOnly
 from social_media.serializers import (
     ProfileSerializer,
     ProfileListSerializer,
     ProfileImageSerializer,
+    PostSerializer,
+    PostListSerializer,
 )
 
 
@@ -93,3 +95,15 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return Response(
             {"detail": "You have unfollowed this user"}, status=status.HTTP_200_OK
         )
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return PostListSerializer
+        return PostSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
