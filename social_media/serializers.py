@@ -21,8 +21,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ("id", "owner", "gender", "bio", "phone_number", "image")
-        read_only_fields = ("id", "image")
+        fields = ("id", "owner", "gender", "bio", "phone_number", "following", "image")
+        read_only_fields = ("id", "following", "image")
 
     def update(self, instance, validated_data):
 
@@ -47,10 +47,11 @@ class ProfileSerializer(serializers.ModelSerializer):
 class ProfileListSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source="owner.first_name")
     last_name = serializers.CharField(source="owner.last_name")
+    count_followers = serializers.IntegerField(source="following.count")
 
     class Meta:
         model = Profile
-        fields = ("id", "first_name", "last_name", "gender", "bio", "phone_number", "image")
+        fields = ("id", "first_name", "last_name", "gender", "bio", "phone_number", "count_followers", "image")
 
 
 class ProfileImageSerializer(serializers.ModelSerializer):

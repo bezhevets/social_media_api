@@ -26,6 +26,7 @@ class Profile(models.Model):
     bio = models.TextField(max_length=255, null=True,blank=True)
     phone_number = models.CharField(max_length=18, null=True, blank=True)
     image = models.ImageField(null=True, upload_to=profile_image_file_path)
+    following = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="followers")
 
     def __str__(self):
         return str(self.owner.first_name + " " + self.owner.last_name)
