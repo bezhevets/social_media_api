@@ -33,7 +33,6 @@ class UserUpdateForProfileSerializer(UserSerializer):
         fields = ("first_name", "last_name",)
 
 
-
 class AuthTokenSerializer(serializers.Serializer):
     email = serializers.EmailField(label=_("Email"))
     password = serializers.CharField(
