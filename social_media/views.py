@@ -97,18 +97,32 @@ class ProfileViewSet(viewsets.ModelViewSet):
             {"detail": "You have unfollowed this user"}, status=status.HTTP_200_OK
         )
 
+
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = (IsOwnerOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
+        queryset = self.queryset
+
+        author_id_str = self.request.query_params.get("author")
+        hashtag = self.request.query_params.get("hashtag")
+        if author_id_str or hashtag:
+            if author_id_str:
+                queryset = queryset.filter(owner_id=int(author_id_str))
+
+            if hashtag:
+                queryset = queryset.filter(hashtag__icontains=hashtag)
+            return queryset.distinct()
+
         if self.action == "list":
             queryset = self.queryset.filter(
                 Q(owner__profile__followers=self.request.user.profile)
                 | Q(owner__profile=self.request.user.profile)
             )
-        return queryset
+
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
