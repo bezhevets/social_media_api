@@ -8,8 +8,7 @@ from django.utils.text import slugify
 
 def profile_image_file_path(instance, filename):
     _, extension = os.path.splitext(filename)
-    full_name = instance.owner.first_name + " " + instance.owner.last_name
-    filename = f"{slugify(full_name)}-{uuid.uuid4()}{extension}"
+    filename = f"{slugify(instance.owner.full_name)}-{uuid.uuid4()}{extension}"
 
     return os.path.join("uploads/profiles/", filename)
 
@@ -26,15 +25,17 @@ class Profile(models.Model):
     bio = models.TextField(max_length=255, null=True, blank=True)
     phone_number = models.CharField(max_length=18, null=True, blank=True)
     image = models.ImageField(null=True, upload_to=profile_image_file_path)
-    following = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="followers")
+    following = models.ManyToManyField(
+        "self", symmetrical=False, blank=True, related_name="followers"
+    )
 
     def __str__(self):
-        return str(self.owner.first_name + " " + self.owner.last_name)
+        return str(self.owner.full_name)
 
 
 def post_image_file_path(instance, filename):
     _, extension = os.path.splitext(filename)
-    filename = f"id_post_{slugify(instance.id)}-{uuid.uuid4()}{extension}"
+    filename = f"id_owner_{slugify(instance.owner.id)}_{slugify(instance.owner.full_name)}-{uuid.uuid4()}{extension}"
 
     return os.path.join("uploads/posts/", filename)
 
