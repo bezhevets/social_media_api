@@ -1,14 +1,14 @@
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
 
 from social_media.models import Profile
+from social_media.permissions import IsOwnerOrIfAuthenticatedReadOnly
 from social_media.serializers import ProfileSerializer, ProfileListSerializer
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsOwnerOrIfAuthenticatedReadOnly,)
 
     def get_serializer_class(self):
         if self.action == "list":

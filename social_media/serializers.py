@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from social_media.models import Profile
 from user.serializers import UserUpdateForProfileSerializer
@@ -7,15 +8,30 @@ from user.serializers import UserUpdateForProfileSerializer
 class ProfileSerializer(serializers.ModelSerializer):
     owner = UserUpdateForProfileSerializer(many=False, partial=True)
 
+    def validate(self, attrs):
+        data = super(ProfileSerializer, self).validate(attrs=attrs)
+
+        user = self.context["request"].user
+        existing_profile = Profile.objects.filter(owner=user).first()
+
+        if existing_profile and self.instance != existing_profile:
+            raise ValidationError({"error": "You already have a profile."})
+
+        return data
+
     class Meta:
         model = Profile
         fields = ("id", "owner", "gender", "bio", "phone_number")
 
     def update(self, instance, validated_data):
+
         owner_data = validated_data.pop("owner", {})
-        instance.gender = validated_data.get("gender", instance.gender)
-        instance.bio = validated_data.get("bio", instance.bio)
-        instance.phone_number = validated_data.get("phone_number", instance.phone_number)
+        fields_to_update = ["gender", "bio", "phone_number"]
+
+        for field in fields_to_update:
+            value = validated_data.get(field, getattr(instance, field))
+            setattr(instance, field, value)
+
         instance.save()
 
         # Оновлюємо дані власника
