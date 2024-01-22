@@ -41,6 +41,10 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(_("email address"), unique=True)
 
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
