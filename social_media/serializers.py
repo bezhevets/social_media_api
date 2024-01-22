@@ -21,7 +21,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ("id", "owner", "gender", "bio", "phone_number")
+        fields = ("id", "owner", "gender", "bio", "phone_number", "image")
+        read_only_fields = ("id", "image")
 
     def update(self, instance, validated_data):
 
@@ -49,4 +50,10 @@ class ProfileListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ("id", "first_name", "last_name", "gender", "bio", "phone_number")
+        fields = ("id", "first_name", "last_name", "gender", "bio", "phone_number", "image")
+
+
+class ProfileImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ("id", "image")
