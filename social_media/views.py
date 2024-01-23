@@ -14,13 +14,16 @@ from social_media.serializers import (
     PostSerializer,
     PostListSerializer,
     CommentSerializer,
-    CommentCreateSerializer, LikeSerializer, LikeDetailSerializer,
+    CommentCreateSerializer,
+    LikeSerializer,
+    LikeDetailSerializer,
 )
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = (
-        Profile.objects.all().select_related("owner")
+        Profile.objects.all()
+        .select_related("owner")
         .prefetch_related("following", "followers")
     )
     serializer_class = ProfileSerializer
@@ -85,7 +88,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
         self.request.user.profile.following.add(profile_to_follow)
         return Response(
-            {"detail": "You are now following this user."}, status=status.HTTP_200_OK
+            {"detail": "You are now following this user."},
+            status=status.HTTP_200_OK,
         )
 
     @action(methods=["GET"], detail=True)
@@ -96,17 +100,21 @@ class ProfileViewSet(viewsets.ModelViewSet):
             id=profile_to_unfollow.id
         ).exists():
             return Response(
-                {"detail": "You are not unfollow this user."}, status=status.HTTP_200_OK
+                {"detail": "You are not unfollow this user."},
+                status=status.HTTP_200_OK,
             )
 
         self.request.user.profile.following.remove(profile_to_unfollow)
         return Response(
-            {"detail": "You have unfollowed this user"}, status=status.HTTP_200_OK
+            {"detail": "You have unfollowed this user"},
+            status=status.HTTP_200_OK,
         )
 
 
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all().select_related("owner").prefetch_related("likes")
+    queryset = (
+        Post.objects.all().select_related("owner").prefetch_related("likes")
+    )
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticated, IsOwnerOrIfAuthenticatedReadOnly)
 
@@ -131,7 +139,10 @@ class PostViewSet(viewsets.ModelViewSet):
         queryset = queryset.annotate(comments_count=Count("comments"))
 
         queryset = queryset.prefetch_related(
-            Prefetch("comments", queryset=Comment.objects.all().select_related("owner"))
+            Prefetch(
+                "comments",
+                queryset=Comment.objects.all().select_related("owner"),
+            )
         )
 
         return queryset.distinct()

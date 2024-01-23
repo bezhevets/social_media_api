@@ -21,7 +21,15 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ("id", "owner", "gender", "bio", "phone_number", "following", "image")
+        fields = (
+            "id",
+            "owner",
+            "gender",
+            "bio",
+            "phone_number",
+            "following",
+            "image",
+        )
         read_only_fields = ("id", "following", "image")
 
     def update(self, instance, validated_data):
@@ -112,7 +120,15 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ("id", "text", "created_at", "hashtag", "image", "comments", "likes")
+        fields = (
+            "id",
+            "text",
+            "created_at",
+            "hashtag",
+            "image",
+            "comments",
+            "likes",
+        )
 
 
 class PostListSerializer(PostSerializer):
