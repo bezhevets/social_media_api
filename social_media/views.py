@@ -19,7 +19,8 @@ from social_media.serializers import (
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = (
-        Profile.objects.all().select_related("owner").prefetch_related("following")
+        Profile.objects.all().select_related("owner")
+        .prefetch_related("following", "followers")
     )
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated, IsOwnerOrIfAuthenticatedReadOnly)

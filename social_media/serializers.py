@@ -46,7 +46,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 class ProfileListSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source="owner.first_name")
     last_name = serializers.CharField(source="owner.last_name")
-    count_followers = serializers.IntegerField(source="following.count")
+    count_following = serializers.IntegerField(source="following.count")
+    count_followers = serializers.IntegerField(source="followers.count")
 
     class Meta:
         model = Profile
@@ -58,6 +59,7 @@ class ProfileListSerializer(serializers.ModelSerializer):
             "bio",
             "phone_number",
             "count_followers",
+            "count_following",
             "image",
         )
 
