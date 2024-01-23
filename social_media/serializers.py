@@ -74,6 +74,12 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ("id", "text", "created_at")
 
 
+class CommentCreateSerializer(CommentSerializer):
+    class Meta:
+        model = Comment
+        fields = ("id", "post", "text", "created_at")
+
+
 class CommentDetailSerializer(CommentSerializer):
     owner = serializers.SlugRelatedField(
         many=False, read_only=True, slug_field="full_name"
@@ -82,12 +88,6 @@ class CommentDetailSerializer(CommentSerializer):
     class Meta:
         model = Comment
         fields = ("id", "owner", "text", "created_at")
-
-
-class CommentCreateSerializer(CommentSerializer):
-    class Meta:
-        model = Comment
-        fields = ("id", "post", "text", "created_at")
 
 
 class PostSerializer(serializers.ModelSerializer):

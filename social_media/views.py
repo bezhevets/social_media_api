@@ -13,7 +13,6 @@ from social_media.serializers import (
     PostSerializer,
     PostListSerializer,
     CommentSerializer,
-    CommentDetailSerializer,
     CommentCreateSerializer,
 )
 
@@ -144,13 +143,6 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
-
-    @action(methods=["GET"], detail=True)
-    def comments(self, request, pk=None):
-        post = self.get_object()
-        comments = Comment.objects.filter(post=post)
-        serializer = CommentDetailSerializer(comments, many=True)
-        return Response(serializer.data)
 
     @action(
         detail=True,
