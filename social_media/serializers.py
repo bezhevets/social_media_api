@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from social_media.models import Profile, Post
+from social_media.models import Profile, Post, Comment
 from user.serializers import UserUpdateForProfileSerializer
 
 
@@ -25,7 +25,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "following", "image")
 
     def update(self, instance, validated_data):
-
         owner_data = validated_data.pop("owner", {})
         fields_to_update = ["gender", "bio", "phone_number"]
 
@@ -51,7 +50,16 @@ class ProfileListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ("id", "first_name", "last_name", "gender", "bio", "phone_number", "count_followers", "image")
+        fields = (
+            "id",
+            "first_name",
+            "last_name",
+            "gender",
+            "bio",
+            "phone_number",
+            "count_followers",
+            "image",
+        )
 
 
 class ProfileImageSerializer(serializers.ModelSerializer):
@@ -60,16 +68,50 @@ class ProfileImageSerializer(serializers.ModelSerializer):
         fields = ("id", "image")
 
 
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ("id", "text", "created_at")
+
+
+class CommentDetailSerializer(CommentSerializer):
+    owner = serializers.SlugRelatedField(
+        many=False, read_only=True, slug_field="full_name"
+    )
+
+    class Meta:
+        model = Comment
+        fields = ("id", "owner", "text", "created_at")
+
+
+class CommentCreateSerializer(CommentSerializer):
+    class Meta:
+        model = Comment
+        fields = ("id", "post", "text", "created_at")
+
+
 class PostSerializer(serializers.ModelSerializer):
+    comments = CommentDetailSerializer(many=True, read_only=True)
+
     class Meta:
         model = Post
-        fields = ("id", "text", "created_at", "hashtag", "image")
+        fields = ("id", "text", "created_at", "hashtag", "image", "comments")
 
 
 class PostListSerializer(PostSerializer):
-    owner = serializers.SlugRelatedField(many=False, read_only=True, slug_field="full_name")
+    owner = serializers.SlugRelatedField(
+        many=False, read_only=True, slug_field="full_name"
+    )
+    comments_count = serializers.IntegerField()
 
     class Meta:
         model = Post
-        fields = ("id", "owner", "text", "hashtag", "image", "created_at")
-
+        fields = (
+            "id",
+            "owner",
+            "text",
+            "hashtag",
+            "image",
+            "comments_count",
+            "created_at",
+        )

@@ -1,9 +1,10 @@
-from django.db.models import Q
-from rest_framework import viewsets, status
+from django.db.models import Q, Count, Prefetch
+from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from social_media.models import Profile, Post
+from social_media.models import Profile, Post, Comment
 from social_media.permissions import IsOwnerOrIfAuthenticatedReadOnly
 from social_media.serializers import (
     ProfileSerializer,
@@ -11,6 +12,9 @@ from social_media.serializers import (
     ProfileImageSerializer,
     PostSerializer,
     PostListSerializer,
+    CommentSerializer,
+    CommentDetailSerializer,
+    CommentCreateSerializer,
 )
 
 
@@ -19,7 +23,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         Profile.objects.all().select_related("owner").prefetch_related("following")
     )
     serializer_class = ProfileSerializer
-    permission_classes = (IsOwnerOrIfAuthenticatedReadOnly,)
+    permission_classes = (IsAuthenticated, IsOwnerOrIfAuthenticatedReadOnly)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -103,7 +107,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().select_related("owner")
     serializer_class = PostSerializer
-    permission_classes = (IsOwnerOrIfAuthenticatedReadOnly,)
+    permission_classes = (IsAuthenticated, IsOwnerOrIfAuthenticatedReadOnly)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -123,13 +127,54 @@ class PostViewSet(viewsets.ModelViewSet):
                 Q(owner__profile__followers=self.request.user.profile)
                 | Q(owner__profile=self.request.user.profile)
             )
+        queryset = queryset.annotate(comments_count=Count("comments"))
+
+        queryset = queryset.prefetch_related(
+            Prefetch("comments", queryset=Comment.objects.all().select_related("owner"))
+        )
 
         return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
             return PostListSerializer
+        if self.action == "create_comment":
+            return CommentSerializer
         return PostSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+    @action(methods=["GET"], detail=True)
+    def comments(self, request, pk=None):
+        post = self.get_object()
+        comments = Comment.objects.filter(post=post)
+        serializer = CommentDetailSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    @action(
+        detail=True,
+        methods=["POST"],
+        url_path="create_comment",
+        permission_classes=[IsAuthenticated],
+    )
+    def create_comment(self, request, pk=None):
+        post = self.get_object()
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(owner=self.request.user, post=post)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    permission_classes = (IsAuthenticated, IsOwnerOrIfAuthenticatedReadOnly)
+
+    def get_serializer_class(self):
+        if self.action in ["retrieve", "update", "destroy"]:
+            return CommentSerializer
+        return CommentCreateSerializer
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
