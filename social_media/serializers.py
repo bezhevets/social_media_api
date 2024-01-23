@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from social_media.models import Profile, Post, Comment
+from social_media.models import Profile, Post, Comment, Like
 from user.serializers import UserUpdateForProfileSerializer
 
 
@@ -92,12 +92,27 @@ class CommentDetailSerializer(CommentSerializer):
         fields = ("id", "owner", "text", "created_at")
 
 
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ("id", "post")
+
+
+class LikeDetailSerializer(LikeSerializer):
+    like = serializers.ReadOnlyField(source="owner.full_name")
+
+    class Meta:
+        model = Like
+        fields = ("id", "post", "like")
+
+
 class PostSerializer(serializers.ModelSerializer):
     comments = CommentDetailSerializer(many=True, read_only=True)
+    likes = LikeDetailSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ("id", "text", "created_at", "hashtag", "image", "comments")
+        fields = ("id", "text", "created_at", "hashtag", "image", "comments", "likes")
 
 
 class PostListSerializer(PostSerializer):
@@ -105,6 +120,7 @@ class PostListSerializer(PostSerializer):
         many=False, read_only=True, slug_field="full_name"
     )
     comments_count = serializers.IntegerField()
+    likes = serializers.IntegerField(source="likes.count")
 
     class Meta:
         model = Post
@@ -115,5 +131,6 @@ class PostListSerializer(PostSerializer):
             "hashtag",
             "image",
             "comments_count",
+            "likes",
             "created_at",
         )

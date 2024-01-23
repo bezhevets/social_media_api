@@ -1,10 +1,11 @@
 from django.db.models import Q, Count, Prefetch
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from social_media.models import Profile, Post, Comment
+from social_media.models import Profile, Post, Comment, Like
 from social_media.permissions import IsOwnerOrIfAuthenticatedReadOnly
 from social_media.serializers import (
     ProfileSerializer,
@@ -13,7 +14,7 @@ from social_media.serializers import (
     PostSerializer,
     PostListSerializer,
     CommentSerializer,
-    CommentCreateSerializer,
+    CommentCreateSerializer, LikeSerializer, LikeDetailSerializer,
 )
 
 
@@ -105,7 +106,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
 
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all().select_related("owner")
+    queryset = Post.objects.all().select_related("owner").prefetch_related("likes")
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticated, IsOwnerOrIfAuthenticatedReadOnly)
 
@@ -171,3 +172,23 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+
+class LikeViewSet(viewsets.ModelViewSet):
+    queryset = Like.objects.all().select_related("owner", "post")
+    permission_classes = (IsAuthenticated, IsOwnerOrIfAuthenticatedReadOnly)
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return LikeDetailSerializer
+        return LikeSerializer
+
+    def perform_create(self, serializer):
+        post = get_object_or_404(Post, pk=self.request.data["post"])
+        user = self.request.user
+
+        likes = Like.objects.filter(owner=user, post=post)
+        if likes:
+            likes.delete()
+        else:
+            serializer.save(owner=user, post=post)
