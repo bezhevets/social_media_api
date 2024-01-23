@@ -66,3 +66,11 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.owner.full_name} added comments to {self.post.id}"
+
+
+class Like(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="likes"
+    )
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="likes")
+
