@@ -11,3 +11,4 @@ venv/
 media
 .flake8
 pyproject.toml
+socialdb.json
