@@ -12,3 +12,4 @@ media
 .flake8
 pyproject.toml
 socialdb.json
+.env_docerl
