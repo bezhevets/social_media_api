@@ -1,3 +1,7 @@
+import os
+from datetime import datetime
+import pytz
+
 from django.db.models import Q, Count, Prefetch
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, status
@@ -14,11 +18,16 @@ from social_media.serializers import (
     ProfileImageSerializer,
     PostSerializer,
     PostListSerializer,
+    PostUpdateSerializer,
     CommentSerializer,
     CommentCreateSerializer,
     LikeSerializer,
     LikeDetailSerializer,
 )
+from social_media.tasks import create_scheduled_post
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -124,7 +133,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
                 type=str,
                 description="Filter by first_name",
                 required=False,
-            )
+            ),
         ]
     )
     def list(self, request, *args, **kwargs):
@@ -155,7 +164,7 @@ class PostViewSet(viewsets.ModelViewSet):
             queryset = self.queryset.filter(
                 Q(owner__profile__followers=self.request.user.profile)
                 | Q(owner__profile=self.request.user.profile)
-            )
+            ).order_by("-created_at")
         queryset = queryset.annotate(comments_count=Count("comments"))
 
         queryset = queryset.prefetch_related(
@@ -170,12 +179,50 @@ class PostViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return PostListSerializer
+        if self.action == "update":
+            return PostUpdateSerializer
         if self.action == "create_comment":
             return CommentSerializer
         return PostSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+    def create(self, request, *args, **kwargs):
+        scheduled_time_str = request.data.get("scheduled_time")
+        if scheduled_time_str:
+            scheduled_time_datetime = datetime.strptime(
+                scheduled_time_str, "%Y-%m-%dT%H:%M"
+            )
+            if datetime.now() >= scheduled_time_datetime:
+                request_data_copy = request.data.copy()
+                request_data_copy.pop("scheduled_time")
+                serializer = self.get_serializer(data=request_data_copy)
+                if serializer.is_valid():
+                    serializer.save(owner=self.request.user)
+                    return Response(
+                        serializer.data, status=status.HTTP_201_CREATED
+                    )
+                return Response(
+                    serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+            else:
+                tz = pytz.timezone(os.environ["TIMEZONE"])
+                create_scheduled_post.apply_async(
+                    args=[self.request.user.id, request.data],
+                    eta=tz.localize(scheduled_time_datetime),
+                )
+                return Response(
+                    {"status": "Post will be created at scheduled time."},
+                    status=status.HTTP_202_ACCEPTED,
+                )
+        else:
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(owner=self.request.user)
+                return Response(
+                    serializer.data, status=status.HTTP_201_CREATED
+                )
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(
         detail=True,
@@ -204,7 +251,7 @@ class PostViewSet(viewsets.ModelViewSet):
                 type=str,
                 description="Filter by hashtag",
                 required=False,
-            )
+            ),
         ]
     )
     def list(self, request, *args, **kwargs):

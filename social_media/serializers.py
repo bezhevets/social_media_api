@@ -117,6 +117,7 @@ class LikeDetailSerializer(LikeSerializer):
 class PostSerializer(serializers.ModelSerializer):
     comments = CommentDetailSerializer(many=True, read_only=True)
     likes = LikeDetailSerializer(many=True, read_only=True)
+    scheduled_time = serializers.DateTimeField(required=False)
 
     class Meta:
         model = Post
@@ -128,6 +129,7 @@ class PostSerializer(serializers.ModelSerializer):
             "image",
             "comments",
             "likes",
+            "scheduled_time"
         )
 
 
@@ -149,4 +151,16 @@ class PostListSerializer(PostSerializer):
             "comments_count",
             "likes",
             "created_at",
+        )
+
+
+class PostUpdateSerializer(PostSerializer):
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "text",
+            "created_at",
+            "hashtag",
+            "image",
         )
