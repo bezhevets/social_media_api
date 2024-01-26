@@ -1,3 +1,4 @@
+import base64
 import os
 from datetime import datetime
 import pytz
@@ -147,6 +148,13 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticated, IsOwnerOrIfAuthenticatedReadOnly)
 
+    @staticmethod
+    def image_decoding(file):
+        image = file.read()
+        byte = base64.b64encode(image)
+        data_image = {"image": byte.decode("utf-8"), "name": file.name}
+        return data_image
+
     def get_queryset(self):
         queryset = self.queryset
 
@@ -204,9 +212,18 @@ class PostViewSet(viewsets.ModelViewSet):
                     serializer.errors, status=status.HTTP_400_BAD_REQUEST
                 )
             else:
+                data_image = None
+                request = request.data.copy()
+
+                if request.get("image"):
+                    data_image = self.image_decoding(
+                        self.request.FILES["image"]
+                    )
+                    request.pop("image")
+
                 tz = pytz.timezone(os.environ["TIMEZONE"])
                 create_scheduled_post.apply_async(
-                    args=[self.request.user.id, request.data],
+                    args=[self.request.user.id, request, data_image],
                     eta=tz.localize(scheduled_time_datetime),
                 )
                 return Response(
