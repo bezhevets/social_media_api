@@ -1,0 +1,67 @@
+version: "3"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "python3 manage.py wait_for_db &&
+             python3 manage.py migrate &&
+             python3 manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"
+    env_file:
+      - .env
+
+  redis:
+      image: "redis:alpine"
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: "celery -A app worker --loglevel=INFO"
+    depends_on:
+      - app
+      - redis
+      - db
+    restart: on-failure
+    env_file:
+      - .env
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python3 manage.py wait_for_db &&
+             celery -A app beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    depends_on:
+      - app
+      - redis
+      - db
+    restart: on-failure
+    env_file:
+      - .env
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5555:5555"
+    command: "celery -A app flower --address=0.0.0.0"
+    depends_on:
+      - celery
+    env_file:
+      - .env

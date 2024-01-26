@@ -221,7 +221,7 @@ class PostViewSet(viewsets.ModelViewSet):
                     )
                     request.pop("image")
 
-                tz = pytz.timezone(os.environ["TIMEZONE"])
+                tz = pytz.timezone(os.environ["TZ"])
                 create_scheduled_post.apply_async(
                     args=[self.request.user.id, request, data_image],
                     eta=tz.localize(scheduled_time_datetime),

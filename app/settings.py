@@ -88,6 +88,7 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "HOST": os.environ["POSTGRES_HOST"],
+        "PORT": os.environ["POSTGRES_PORT"],
         "NAME": os.environ["POSTGRES_NAME"],
         "USER": os.environ["POSTGRES_USER"],
         "PASSWORD": os.environ["POSTGRES_PASSWORD"]
@@ -121,7 +122,7 @@ AUTH_USER_MODEL = "user.User"
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = os.environ["TIMEZONE"]
+TIME_ZONE = os.environ["TZ"]
 
 USE_I18N = True
 
@@ -173,6 +174,6 @@ SPECTACULAR_SETTINGS = {
 
 CELERY_BROKER_URL = os.environ["CELERY_BROKER_URL"]
 CELERY_RESULT_BACKEND = os.environ["CELERY_RESULT_BACKEND"]
-CELERY_TIMEZONE = os.environ["TIMEZONE"]
+CELERY_TIMEZONE = os.environ["TZ"]
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
