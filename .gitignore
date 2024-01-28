@@ -1,0 +1,15 @@
+.idea/
+.vscode/
+*.iml
+.env
+.DS_Store
+venv/
+.pytest_cache/
+**__pycache__/
+**db.sqlite3
+*.pyc
+media
+.flake8
+pyproject.toml
+socialdb.json
+.env_local
