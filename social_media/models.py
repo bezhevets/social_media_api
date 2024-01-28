@@ -10,7 +10,7 @@ def profile_image_file_path(instance, filename):
     _, extension = os.path.splitext(filename)
     filename = f"{slugify(instance.owner.full_name)}-{uuid.uuid4()}{extension}"
 
-    return os.path.join("uploads/profiles/", filename)
+    return os.path.join("uploads", "profiles", filename)
 
 
 class Profile(models.Model):
@@ -43,7 +43,7 @@ def post_image_file_path(instance, filename):
         f"-{uuid.uuid4()}{extension}"
     )
 
-    return os.path.join("uploads/posts/", filename)
+    return os.path.join("uploads", "posts", filename)
 
 
 class Post(models.Model):

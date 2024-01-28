@@ -75,11 +75,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def upload_image(self, request, pk=None):
         profile = self.get_object()
         serializer = self.get_serializer(profile, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(methods=["GET"], detail=True)
     def follow(self, request, pk=None):
@@ -203,13 +201,10 @@ class PostViewSet(viewsets.ModelViewSet):
                 request_data_copy = request.data.copy()
                 request_data_copy.pop("scheduled_time")
                 serializer = self.get_serializer(data=request_data_copy)
-                if serializer.is_valid():
-                    serializer.save(owner=self.request.user)
-                    return Response(
-                        serializer.data, status=status.HTTP_201_CREATED
-                    )
+                serializer.is_valid(raise_exception=True)
+                serializer.save(owner=self.request.user)
                 return Response(
-                    serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                    serializer.data, status=status.HTTP_201_CREATED
                 )
             else:
                 data_image = None
@@ -232,13 +227,10 @@ class PostViewSet(viewsets.ModelViewSet):
                 )
         else:
             serializer = self.get_serializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save(owner=self.request.user)
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(owner=self.request.user)
             return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                serializer.data, status=status.HTTP_201_CREATED
             )
 
     @action(
@@ -250,10 +242,9 @@ class PostViewSet(viewsets.ModelViewSet):
     def create_comment(self, request, pk=None):
         post = self.get_object()
         serializer = CommentSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(owner=self.request.user, post=post)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(owner=self.request.user, post=post)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         parameters=[
