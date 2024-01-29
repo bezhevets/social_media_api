@@ -102,7 +102,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         )
 
     @action(methods=["GET"], detail=True)
-    def unfolow(self, request, pk=None):
+    def unfollow(self, request, pk=None):
         profile_to_unfollow = self.get_object()
 
         if not self.request.user.profile.following.filter(
